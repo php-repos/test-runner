@@ -2,7 +2,8 @@
 
 namespace Tests\RegularFile;
 
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test('it loads regular files', function () {
     assert_true(true);

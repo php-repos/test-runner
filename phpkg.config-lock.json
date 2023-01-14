@@ -1,0 +1,28 @@
+{
+    "packages": {
+        "https:\/\/github.com\/php-repos\/file-manager.git": {
+            "owner": "php-repos",
+            "repo": "file-manager",
+            "version": "v1.0.0",
+            "hash": ""
+        },
+        "git@github.com:php-repos\/test-runner.git": {
+            "owner": "php-repos",
+            "repo": "test-runner",
+            "version": "v1.0.0",
+            "hash": ""
+        },
+        "https:\/\/github.com\/php-repos\/cli.git": {
+            "owner": "php-repos",
+            "repo": "cli",
+            "version": "v1.0.0",
+            "hash": ""
+        },
+        "git@github.com:php-repos\/datatype.git": {
+            "owner": "php-repos",
+            "repo": "datatype",
+            "version": "v1.0.0",
+            "hash": ""
+        }
+    }
+}

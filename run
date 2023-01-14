@@ -1,51 +1,13 @@
 #!/usr/bin/env php
 <?php
 
-use Saeghe\FileManager\Filesystem\Directory;
-use Saeghe\FileManager\Filesystem\File;
-use function Saeghe\Cli\IO\Read\parameter;
-use function Saeghe\Cli\IO\Write\error;
-use function Saeghe\Cli\IO\Write\line;
-use function Saeghe\FileManager\Resolver\root;
+use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\Filesystem\File;
+use function PhpRepos\Cli\IO\Read\parameter;
+use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\FileManager\Resolver\root;
 
 static $statistics = ['cases' => 0, 'success' => 0, 'failed' => 0];
-
-function test(string $title, Closure $case, ?Closure $before = null, ?Closure $after = null, ?Closure $finally = null)
-{
-    global $statistics;
-
-    $statistics['cases']++;
-
-    try {
-        $beforeHookOutput = $before ? call_user_func($before) : null;
-
-        $reflection = new ReflectionFunction($case);
-        if ($reflection->getNumberOfParameters() > 1) {
-            $caseOutput = call_user_func($case, ...$beforeHookOutput);
-        } else {
-            $caseOutput = call_user_func($case, $beforeHookOutput);
-        }
-
-        if ($after) {
-            $reflection = new ReflectionFunction($after);
-            if ($reflection->getNumberOfParameters() > 1) {
-                call_user_func($after, ...$caseOutput);
-            } else {
-                call_user_func($after, $caseOutput);
-            }
-        }
-        $statistics['success']++;
-        line("✅ $title");
-    } catch (AssertionError $exception) {
-        $statistics['failed']++;
-        line("❌ $title: ");
-        error($exception->getMessage());
-    } finally {
-        if ($finally) {
-            call_user_func($finally);
-        }
-    }
-}
 
 $tests_directory = Directory::from_string(root() . parameter('directory', 'Tests'));
 

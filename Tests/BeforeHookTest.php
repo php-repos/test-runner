@@ -2,7 +2,8 @@
 
 namespace Tests\BeforeHookTest;
 
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should run the before hook',

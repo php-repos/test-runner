@@ -3,8 +3,9 @@
 namespace Tests\Assertions;
 
 use AssertionError;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
-use function Saeghe\TestRunner\Assertions\Str\assert_string_equal;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\Str\assert_string_equal;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should assert two strings are equal',

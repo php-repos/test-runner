@@ -1,6 +1,6 @@
 <?php
 
-namespace Saeghe\TestRunner\Assertions\Boolean;
+namespace PhpRepos\TestRunner\Assertions\Boolean;
 
 use AssertionError;
 

@@ -2,6 +2,8 @@
 
 namespace Tests\SuccessTest;
 
+use function PhpRepos\TestRunner\Runner\test;
+
 test(
     title: 'it should pass the test case',
     case: function () {

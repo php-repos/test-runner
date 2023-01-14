@@ -8,7 +8,8 @@
 namespace Tests\ATestThatNeedsRegularFileTest;
 
 use function Tests\RegularFile\returnTrue;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test('it should not break with using the other file', function () {
     assert_true(returnTrue());

@@ -3,8 +3,9 @@
 namespace Tests\FinallyHookTest;
 
 use AssertionError;
-use function Saeghe\Cli\IO\Write\success;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\Cli\IO\Write\success;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should call finally hook for success',

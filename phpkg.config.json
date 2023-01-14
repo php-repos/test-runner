@@ -1,0 +1,22 @@
+{
+    "map": {
+        "PhpRepos\\TestRunner": "Source",
+        "Tests": "Tests"
+    },
+    "entry-points": [
+        "run"
+    ],
+    "excludes": [],
+    "executables": {
+        "test-runner": "run"
+    },
+    "packages-directory": "Packages",
+    "packages": {
+        "https:\/\/github.com\/php-repos\/cli.git": "v1.0.0",
+        "https:\/\/github.com\/php-repos\/file-manager.git": "v1.0.0"
+    },
+    "aliases": {
+        "cli": "https:\/\/github.com\/php-repos\/cli.git",
+        "file-manager": "https:\/\/github.com\/php-repos\/file-manager.git"
+    }
+}
