@@ -1,23 +1,23 @@
 #!/usr/bin/env php
 <?php
 
-use PhpRepos\FileManager\Filesystem\Directory;
-use PhpRepos\FileManager\Filesystem\File;
+use PhpRepos\FileManager\Path;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\FileManager\Directory\ls_recursively;
 use function PhpRepos\FileManager\Resolver\root;
 
 static $statistics = ['cases' => 0, 'success' => 0, 'failed' => 0];
 
-$tests_directory = Directory::from_string(root() . parameter('directory', 'Tests'));
+$tests_directory = Path::from_string(root() . parameter('directory', 'Tests'));
 
 $filter = parameter('filter', '');
 
-$tests_directory->recursively()
-    ->files()
-    ->filter(fn (File $file) => str_contains($file->path->string(), $filter) && str_ends_with($file, 'Test.php'))
-    ->each(function (File $test_file) {
-        require $test_file->path->string();
+ls_recursively($tests_directory)
+    ->vertices()
+    ->filter(fn (Path $file) => str_contains($file->string(), $filter) && str_ends_with($file, 'Test.php'))
+    ->each(function (Path $test_file) {
+        require $test_file->string();
     });
 
 line(PHP_EOL . "cases: {$statistics['cases']}, success: {$statistics['success']}, failed: {$statistics['failed']}");
