@@ -59,3 +59,16 @@ test(
         assert_true(false === true, 'You should not be here! After hook should not run for failed tests.');
     }
 );
+
+test(
+    title: 'it should receive data from before hook when nothing passed from the case',
+    case: function () {
+        assert_true(true);
+    },
+    before: function () {
+        return 'This is what you should see in after hook';
+    },
+    after: function ($data_from_before) {
+        assert_true($data_from_before === 'This is what you should see in after hook');
+    }
+);
