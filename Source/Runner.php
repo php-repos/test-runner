@@ -15,21 +15,23 @@ function test(string $title, Closure $case, ?Closure $before = null, ?Closure $a
     $statistics['cases']++;
 
     try {
-        $beforeHookOutput = $before ? call_user_func($before) : null;
+        $before_hook_output = $before ? call_user_func($before) : null;
 
         $reflection = new ReflectionFunction($case);
         if ($reflection->getNumberOfParameters() > 1) {
-            $caseOutput = call_user_func($case, ...$beforeHookOutput);
+            $case_output = call_user_func($case, ...$before_hook_output);
         } else {
-            $caseOutput = call_user_func($case, $beforeHookOutput);
+            $case_output = call_user_func($case, $before_hook_output);
         }
+
+        $before_inputs = $case_output ?? $before_hook_output;
 
         if ($after) {
             $reflection = new ReflectionFunction($after);
             if ($reflection->getNumberOfParameters() > 1) {
-                call_user_func($after, ...$caseOutput);
+                call_user_func($after, ...$before_inputs);
             } else {
-                call_user_func($after, $caseOutput);
+                call_user_func($after, $before_inputs);
             }
         }
         $statistics['success']++;
