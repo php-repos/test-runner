@@ -5,8 +5,8 @@ namespace PhpRepos\TestRunner\Runner;
 use AssertionError;
 use Closure;
 use ReflectionFunction;
-use function PhpRepos\Cli\IO\Write\error;
-use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\Output\error;
+use function PhpRepos\Cli\Output\line;
 
 function test(string $title, Closure $case, ?Closure $before = null, ?Closure $after = null, ?Closure $finally = null): void
 {

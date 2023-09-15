@@ -12,8 +12,8 @@
     },
     "packages-directory": "Packages",
     "packages": {
-        "https:\/\/github.com\/php-repos\/cli.git": "v1.0.0",
-        "https:\/\/github.com\/php-repos\/file-manager.git": "v2.0.0"
+        "https:\/\/github.com\/php-repos\/cli.git": "v2.0.0",
+        "https:\/\/github.com\/php-repos\/file-manager.git": "v2.0.3"
     },
     "aliases": {
         "cli": "https:\/\/github.com\/php-repos\/cli.git",
