@@ -1,22 +1,22 @@
 {
     "packages": {
+        "https:\/\/github.com\/php-repos\/cli.git": {
+            "owner": "php-repos",
+            "repo": "cli",
+            "version": "v2.0.0",
+            "hash": "f4445518f45bc4161037532298b509bc7fb071bd"
+        },
+        "git@github.com:php-repos\/test-runner.git": {
+            "owner": "php-repos",
+            "repo": "test-runner",
+            "version": "v1.1.0",
+            "hash": "119c47953485a6ec127cd896a70e96376306a954"
+        },
         "https:\/\/github.com\/php-repos\/file-manager.git": {
             "owner": "php-repos",
             "repo": "file-manager",
             "version": "v2.0.0",
             "hash": "e5104a58dd4192c95701d414373b3add3e504bff"
-        },
-        "git@github.com:php-repos\/test-runner.git": {
-            "owner": "php-repos",
-            "repo": "test-runner",
-            "version": "v1.0.0",
-            "hash": "c5ee7b5d9a228b6e833af414359d486609ee530d"
-        },
-        "https:\/\/github.com\/php-repos\/cli.git": {
-            "owner": "php-repos",
-            "repo": "cli",
-            "version": "v1.0.0",
-            "hash": "f7c1eecaee1fbf01f4ea90a375ae8a3cd4944b3e"
         },
         "git@github.com:php-repos\/datatype.git": {
             "owner": "php-repos",

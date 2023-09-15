@@ -2,16 +2,33 @@
 <?php
 
 use PhpRepos\FileManager\Path;
-use function PhpRepos\Cli\IO\Read\parameter;
-use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\Output\line;
 use function PhpRepos\FileManager\Directory\ls_recursively;
 use function PhpRepos\FileManager\Resolver\root;
 
 static $statistics = ['cases' => 0, 'success' => 0, 'failed' => 0];
 
-$tests_directory = Path::from_string(root() . parameter('directory', 'Tests'));
+$parameter = function(string $name, ?string $default = null): ?string
+{
+    $input = getopt('', [$name . '::']);
 
-$filter = parameter('filter', '');
+    if (count($input) === 0) {
+        global $argv;
+
+        // Search for the named parameter and extract its value
+        $input = array_reduce($argv, function ($carry, $argument) use ($name) {
+            return str_starts_with($argument, "--$name=")
+                ? [$name => str_replace("--$name=", '', $argument)]
+                : $carry;
+        }, []);
+    }
+
+    return $input[$name] ?? $default;
+};
+
+$tests_directory = Path::from_string(root() . $parameter('directory', 'Tests'));
+
+$filter = $parameter('filter', '');
 
 ls_recursively($tests_directory)
     ->vertices()
