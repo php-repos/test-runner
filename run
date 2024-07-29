@@ -2,11 +2,15 @@
 <?php
 
 use PhpRepos\FileManager\Path;
+use PhpRepos\TestRunner\Statistics;
 use function PhpRepos\Cli\Output\line;
+use function PhpRepos\Cli\Output\write;
 use function PhpRepos\FileManager\Directory\ls_recursively;
 use function PhpRepos\FileManager\Resolver\root;
 
-static $statistics = ['cases' => 0, 'success' => 0, 'failed' => 0];
+$storage = tempnam(sys_get_temp_dir(), 'test-runner-statistics-');
+$statistics = new Statistics();
+file_put_contents($storage, serialize($statistics));
 
 $parameter = function(string $name, ?string $default = null): ?string
 {
@@ -26,17 +30,44 @@ $parameter = function(string $name, ?string $default = null): ?string
     return $input[$name] ?? $default;
 };
 
-$tests_directory = Path::from_string(root() . $parameter('directory', 'Tests'));
+$root = Path::from_string(root());
+$tests_directory = $root->append($parameter('directory', 'Tests'));
 
 $filter = $parameter('filter', '');
+
+$import_file = __DIR__ . '/Imports.php';
 
 ls_recursively($tests_directory)
     ->vertices()
     ->filter(fn (Path $file) => str_contains($file->string(), $filter) && str_ends_with($file, 'Test.php'))
-    ->each(function (Path $test_file) {
-        require $test_file->string();
+    ->each(function (Path $test_file) use ($storage, $import_file) {
+        $descriptor_spec = [
+            0 => ["pipe", "r"],  // stdin
+            1 => ["pipe", "w"],  // stdout
+            2 => ["pipe", "w"]   // stderr
+        ];
+
+        $process = proc_open(
+            command: "env STATISTICS_STORAGE=$storage php -d auto_prepend_file=$import_file {$test_file->string()}",
+            descriptor_spec: $descriptor_spec,
+            pipes: $pipes,
+        );
+
+        if (is_resource($process)) {
+            $output = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+            $error_output = stream_get_contents($pipes[2]);
+            fclose($pipes[2]);
+            proc_close($process);
+
+            write($output);
+            write($error_output);
+        }
     });
 
-line(PHP_EOL . "cases: {$statistics['cases']}, success: {$statistics['success']}, failed: {$statistics['failed']}");
+/** @var Statistics $statistics */
+$statistics = unserialize(file_get_contents($storage));
 
-exit($statistics['failed']);
+line(PHP_EOL . "cases: {$statistics->cases}, success: {$statistics->success}, failed: {$statistics->failed}");
+
+exit($statistics->failed);

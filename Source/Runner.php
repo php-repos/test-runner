@@ -4,15 +4,17 @@ namespace PhpRepos\TestRunner\Runner;
 
 use AssertionError;
 use Closure;
+use PhpRepos\TestRunner\Statistics;
 use ReflectionFunction;
 use function PhpRepos\Cli\Output\error;
 use function PhpRepos\Cli\Output\line;
 
 function test(string $title, Closure $case, ?Closure $before = null, ?Closure $after = null, ?Closure $finally = null): void
 {
-    global $statistics;
+    /** @var Statistics $statistics */
+    $statistics = unserialize(file_get_contents(getenv('STATISTICS_STORAGE')));
 
-    $statistics['cases']++;
+    $statistics->cases++;
 
     try {
         $before_hook_output = $before ? call_user_func($before) : null;
@@ -34,15 +36,17 @@ function test(string $title, Closure $case, ?Closure $before = null, ?Closure $a
                 call_user_func($after, $before_inputs);
             }
         }
-        $statistics['success']++;
+        $statistics->success++;
         line("✅ $title");
     } catch (AssertionError $exception) {
-        $statistics['failed']++;
+        $statistics->failed++;
         line("❌ $title: ");
         error($exception->getMessage());
     } finally {
         if ($finally) {
             call_user_func($finally);
         }
+
+        file_put_contents(getenv('STATISTICS_STORAGE'), serialize($statistics));
     }
 }

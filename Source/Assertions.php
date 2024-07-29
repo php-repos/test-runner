@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpRepos\TestRunner\Assertions\Boolean;
+namespace PhpRepos\TestRunner\Assertions;
 
 use AssertionError;
 
@@ -8,7 +8,7 @@ function assert_false(bool $actual, ?string $message = null): bool
 {
     $message = $message ?? 'true is not false.';
 
-    return assert_true(! $actual, $message);
+    return assert_true(!$actual, $message);
 }
 
 function assert_true(bool $actual, ?string $message = null): bool
