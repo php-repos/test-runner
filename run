@@ -31,16 +31,17 @@ $parameter = function(string $name, ?string $default = null): ?string
 };
 
 $root = Path::from_string(root());
+
 $tests_directory = $root->append($parameter('directory', 'Tests'));
 
 $filter = $parameter('filter', '');
-
-$import_file = __DIR__ . '/Imports.php';
+$import_file_path = $root->append(getenv('PHPKG_IMPORT_FILE') ?: 'phpkg.imports.php');
 
 ls_recursively($tests_directory)
     ->vertices()
     ->filter(fn (Path $file) => str_contains($file->string(), $filter) && str_ends_with($file, 'Test.php'))
-    ->each(function (Path $test_file) use ($storage, $import_file) {
+    ->each(function (Path $test_file) use ($storage, $import_file_path) {
+        $import_file = __DIR__ . '/Imports.php';
         $descriptor_spec = [
             0 => ["pipe", "r"],  // stdin
             1 => ["pipe", "w"],  // stdout
@@ -48,7 +49,7 @@ ls_recursively($tests_directory)
         ];
 
         $process = proc_open(
-            command: "env STATISTICS_STORAGE=$storage php -d auto_prepend_file=$import_file {$test_file->string()}",
+            command: "env PHPKG_IMPORT_FILE=$import_file_path STATISTICS_STORAGE=$storage php -d auto_prepend_file=$import_file  -f {$test_file->string()}",
             descriptor_spec: $descriptor_spec,
             pipes: $pipes,
         );
