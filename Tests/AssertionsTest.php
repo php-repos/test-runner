@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Assertions\BooleanTest;
+namespace Tests\Assertions\AssertionsTest;
 
 use AssertionError;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_false;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

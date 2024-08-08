@@ -4,7 +4,7 @@ namespace Tests\FinallyHookTest;
 
 use AssertionError;
 use function PhpRepos\Cli\Output\success;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

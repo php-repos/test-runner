@@ -1,3 +1,8 @@
 .idea
-builds/
-Packages/
+.github
+builds
+Packages
+Tests
+OtherTestDirectory
+LICENSE
+README.md
