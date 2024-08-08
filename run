@@ -2,15 +2,12 @@
 <?php
 
 use PhpRepos\FileManager\Path;
-use PhpRepos\TestRunner\Statistics;
+use PhpRepos\TestRunner\TestResults;
+use PhpRepos\TestRunner\TestRun;
 use function PhpRepos\Cli\Output\line;
 use function PhpRepos\Cli\Output\write;
 use function PhpRepos\FileManager\Directory\ls_recursively;
 use function PhpRepos\FileManager\Resolver\root;
-
-$storage = tempnam(sys_get_temp_dir(), 'test-runner-statistics-');
-$statistics = new Statistics();
-file_put_contents($storage, serialize($statistics));
 
 $parameter = function(string $name, ?string $default = null): ?string
 {
@@ -36,39 +33,63 @@ $tests_directory = $root->append($parameter('directory', 'Tests'));
 
 $filter = $parameter('filter', '');
 $import_file_path = $root->append(getenv('PHPKG_IMPORT_FILE') ?: 'phpkg.imports.php');
+$record = TestResults\insert(new TestRun($root, $filter));
 
 ls_recursively($tests_directory)
     ->vertices()
     ->filter(fn (Path $file) => str_contains($file->string(), $filter) && str_ends_with($file, 'Test.php'))
-    ->each(function (Path $test_file) use ($storage, $import_file_path) {
+    ->each(function (Path $test_file) use ($record, $import_file_path) {
         $import_file = __DIR__ . '/Imports.php';
         $descriptor_spec = [
             0 => ["pipe", "r"],  // stdin
             1 => ["pipe", "w"],  // stdout
-            2 => ["pipe", "w"]   // stderr
+            2 => ["pipe", "w"],  // stderr
+            3 => ["pipe", "w"],  // custom
         ];
 
-        $process = proc_open(
-            command: "env PHPKG_IMPORT_FILE=$import_file_path STATISTICS_STORAGE=$storage php -d auto_prepend_file=$import_file  -f {$test_file->string()}",
-            descriptor_spec: $descriptor_spec,
-            pipes: $pipes,
-        );
+        $command = "env PHPKG_IMPORT_FILE=$import_file_path TEST_RESULT_ID=$record->id php -d auto_prepend_file=$import_file -f {$test_file->string()}";
+
+        $process = proc_open($command, $descriptor_spec, $pipes);
 
         if (is_resource($process)) {
-            $output = stream_get_contents($pipes[1]);
+            stream_set_blocking($pipes[1], false);
+            stream_set_blocking($pipes[2], false);
+            stream_set_blocking($pipes[3], false);
+
+            while (true) {
+                $status = proc_get_status($process);
+
+                $output_chunk = fread($pipes[1], 8192);
+                if ($output_chunk !== false && $output_chunk !== '') {
+                    write($output_chunk);
+                }
+
+                $error_output_chunk = fread($pipes[2], 8192);
+                if ($error_output_chunk !== false && $error_output_chunk !== '') {
+                    write($error_output_chunk);
+                }
+
+                $custom_output_chunk = fread($pipes[3], 8192);
+                if ($custom_output_chunk !== false && $custom_output_chunk !== '') {
+                    write($custom_output_chunk);
+                }
+
+                if (!$status['running']) {
+                    break;
+                }
+            }
+
             fclose($pipes[1]);
-            $error_output = stream_get_contents($pipes[2]);
             fclose($pipes[2]);
             proc_close($process);
-
-            write($output);
-            write($error_output);
         }
     });
 
-/** @var Statistics $statistics */
-$statistics = unserialize(file_get_contents($storage));
+$record = TestResults\find($record->id);
+$cases = count($record->cases);
+$successes = count(array_filter($record->cases, fn ($case) => $case['successful']));
+$failed = count(array_filter($record->cases, fn ($case) => ! $case['successful']));
 
-line(PHP_EOL . "cases: {$statistics->cases}, success: {$statistics->success}, failed: {$statistics->failed}");
+line(PHP_EOL . "cases: $cases, success: $successes, failed: $failed");
 
-exit($statistics->failed);
+exit($failed);
