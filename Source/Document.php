@@ -7,7 +7,6 @@ use DateTimeImmutable;
 abstract class Document
 {
     public static string $storage = __DIR__ . '/../Storage/';
-    public readonly string $collection;
     public readonly string $id;
     public readonly DateTimeImmutable $created_at;
     /**
