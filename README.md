@@ -6,9 +6,7 @@ Test Runner Package is a simple solution to define and run tests for a PHP libra
 
 ---
 
-## Usage
-
-### Running tests as a tool
+## Running tests as a tool
 
 Before you consider adding Test Runner as a dependency to your project, we strongly recommend using it as a standalone tool via the `phpkg run` command. Here’s why:
 
@@ -30,7 +28,7 @@ This method requires no installation and enables immediate testing.
 
 > Note: When using Test Runner as a tool, your IDE might not resolve PhpRepos\TestRunner\Runner\test or PhpRepos\TestRunner\Assertions. This won’t affect execution, as Test Runner loads these definitions at runtime. IDE extensions to resolve these are in development.
 
-### As a dependency by installation (only if you must)
+## As a dependency by installation (only if you must)
 
 If you still prefer to install Test Runner as a dependency, you can do so with:
 
@@ -48,11 +46,11 @@ cd builds/development
 
 The Test Runner file is executable and requires no `php` prefix.
 
-### Writing tests
+## Writing tests
 
 By default, Test Runner looks for tests in the `Tests` directory of your project. Test files must end with `Test.php` (e.g., `HomeTest.php`) to be recognized.
 
-#### Defining tests
+### Defining tests
 
 Define tests using the test function, which has the following signature:
 
@@ -70,7 +68,7 @@ Here’s what each parameter does:
 - `after`: (Optional) A closure executed after a successful test case, ideal for cleanup.
 - `finally`: (Optional) A closure that runs after the test case, even if it fails.
 
-##### Example: Basic Test
+#### Example: Basic Test
 
 ```php
 use function PhpRepos\TestRunner\Assertions\assert_true;
@@ -86,7 +84,7 @@ test(
 );
 ```
 
-##### Example: Using before
+#### Example: Using before
 
 Set up preconditions before the test:
 
@@ -137,7 +135,7 @@ test(
 );
 ```
 
-##### Example: Using after
+#### Example: Using after
 
 Clean up after a successful test:
 
@@ -195,7 +193,7 @@ test(
 );
 ```
 
-##### Example: Using finally
+#### Example: Using finally
 
 Run code regardless of test success or failure:
 
@@ -215,41 +213,3 @@ test(
 ```
 
 > Note: You cannot pass parameters to the finally closure.
-
----
-
-## Contributing
-
-### Setting up the development environment
-
-To contribute to Test Runner, follow these steps:
-
-1. Clone the repository:
-
-    ```bash
-    git clone git@github.com:php-repos/test-runner.git
-    cd test-runner
-    ```
-
-2. Installing dependencies
-
-    ```bash
-    phpkg install
-    ```
-
-3. Building the project
-
-    ```bash
-    phpkg build
-    # Or, for continuous development:
-    phpkg watch
-    ```
-
-4. Running tests
-
-    To test your changes:
-    
-    ```bash
-    cd builds/development
-    ./run
-    ```
