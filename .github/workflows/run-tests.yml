@@ -57,9 +57,9 @@ jobs:
       - name: Check test result
         if: always()
         run: |
-          if [ ${{ steps.execute-tests.outcome }} -ne 3 ]; then
-            echo "Test run did not exit with code 3."
+          if [ ${{ steps.execute-tests.outcome }} -ne 2 ]; then
+            echo "Test run did not exit with code 2."
             exit 1
           else
-            echo "Test run exited with code 3."
+            echo "Test run exited with code 2."
           fi
