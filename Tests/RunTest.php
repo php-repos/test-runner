@@ -10,7 +10,7 @@ test(
     case: function () {
         exec('php ' . getcwd() . DIRECTORY_SEPARATOR . 'run --directory=OtherTestDirectory', $output);
 
-        assert_true(str_contains($output[0], "✅ it should pass the test case"));
-        assert_true(3 === count($output));
+        assert_true(str_contains($output[0], "✅ it should pass the test case"), 'The output is not what we expected: ' . print_r($output, true));
+        assert_true(3 === count($output), 'Output counts are not 3');
     },
 );

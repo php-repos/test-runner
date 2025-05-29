@@ -15,14 +15,14 @@
         "https:\/\/github.com\/php-repos\/file-manager.git": {
             "owner": "php-repos",
             "repo": "file-manager",
-            "version": "v4.0.0",
-            "hash": "3923da2d07c20b981d141da834235a32ffae79a2"
+            "version": "v5.0.0",
+            "hash": "c9635dc75c45a9b227bd9f9381974046573664ec"
         },
         "git@github.com:php-repos\/datatype.git": {
             "owner": "php-repos",
             "repo": "datatype",
-            "version": "v3.0.0",
-            "hash": "7ec9a0712e3995f9b152d8378e664579e926cf8a"
+            "version": "v4.0.0",
+            "hash": "d29dc1c67d83217b20768a74a973f1b5fc4513ea"
         }
     }
 }

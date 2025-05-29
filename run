@@ -6,8 +6,11 @@ use PhpRepos\TestRunner\TestResults;
 use PhpRepos\TestRunner\TestRun;
 use function PhpRepos\Cli\Output\line;
 use function PhpRepos\Cli\Output\write;
-use function PhpRepos\FileManager\Directory\ls_recursively;
-use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\Datatype\Arr\filter;
+use function PhpRepos\FileManager\Directories\ls_all;
+use function PhpRepos\FileManager\Files\exists;
+use function PhpRepos\FileManager\Paths\append;
+use function PhpRepos\FileManager\Paths\root;
 
 $parameter = function(string $name, ?string $default = null): ?string
 {
@@ -29,61 +32,64 @@ $parameter = function(string $name, ?string $default = null): ?string
 
 $root = Path::from_string(root());
 
-$tests_directory = $root->append($parameter('directory', 'Tests'));
+$tests_directory = Path::from(append($root, $parameter('directory', 'Tests')));
 
 $filter = $parameter('filter', '');
-$import_file_path = $root->append(getenv('PHPKG_IMPORT_FILE') ?: 'phpkg.imports.php');
+$phpkg_import_file = append($root, getenv('PHPKG_IMPORT_FILE') ?: 'phpkg.imports.php');
 $record = TestResults\insert(new TestRun($root, $filter));
 
-ls_recursively($tests_directory)
-    ->vertices()
-    ->filter(fn (Path $file) => str_contains($file->string(), $filter) && str_ends_with($file, 'Test.php'))
-    ->each(function (Path $test_file) use ($record, $import_file_path) {
-        $import_file = __DIR__ . '/Imports.php';
-        $descriptor_spec = [
-            0 => ["pipe", "r"],  // stdin
-            1 => ["pipe", "w"],  // stdout
-            2 => ["pipe", "w"],  // stderr
-            3 => ["pipe", "w"],  // custom
-        ];
+$tests = filter(ls_all($tests_directory), fn (string $file) => str_contains($file, $filter) && str_ends_with($file, 'Test.php'));
 
-        $command = "env PHPKG_IMPORT_FILE=$import_file_path TEST_RESULT_ID=$record->id php -d auto_prepend_file=$import_file -f {$test_file->string()}";
+$import_file = __DIR__ . '/Imports.php';
+$descriptor_spec = [
+    0 => ["pipe", "r"],  // stdin
+    1 => ["pipe", "w"],  // stdout
+    2 => ["pipe", "w"],  // stderr
+    3 => ["pipe", "w"],  // custom
+];
 
-        $process = proc_open($command, $descriptor_spec, $pipes);
+$base_command = "env ";
+$base_command .= exists($phpkg_import_file) ? "PHPKG_IMPORT_FILE=$phpkg_import_file " : '';
+$base_command .= "TEST_RESULT_ID=$record->id php -d auto_prepend_file=$import_file ";
 
-        if (is_resource($process)) {
-            stream_set_blocking($pipes[1], false);
-            stream_set_blocking($pipes[2], false);
-            stream_set_blocking($pipes[3], false);
+foreach ($tests as $test_file) {
+    $command = "{$base_command}{$test_file}";
 
-            while (true) {
-                $status = proc_get_status($process);
+    $process = proc_open($command, $descriptor_spec, $pipes);
 
-                $output_chunk = fread($pipes[1], 8192);
-                if ($output_chunk !== false && $output_chunk !== '') {
-                    write($output_chunk);
-                }
+    if (is_resource($process)) {
+        stream_set_blocking($pipes[1], false);
+        stream_set_blocking($pipes[2], false);
+        stream_set_blocking($pipes[3], false);
 
-                $error_output_chunk = fread($pipes[2], 8192);
-                if ($error_output_chunk !== false && $error_output_chunk !== '') {
-                    write($error_output_chunk);
-                }
+        while (true) {
+            $status = proc_get_status($process);
 
-                $custom_output_chunk = fread($pipes[3], 8192);
-                if ($custom_output_chunk !== false && $custom_output_chunk !== '') {
-                    write($custom_output_chunk);
-                }
-
-                if (!$status['running']) {
-                    break;
-                }
+            $output_chunk = fread($pipes[1], 8192);
+            if ($output_chunk !== false && $output_chunk !== '') {
+                write($output_chunk);
             }
 
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            proc_close($process);
+            $error_output_chunk = fread($pipes[2], 8192);
+            if ($error_output_chunk !== false && $error_output_chunk !== '') {
+                write($error_output_chunk);
+            }
+
+            $custom_output_chunk = fread($pipes[3], 8192);
+            if ($custom_output_chunk !== false && $custom_output_chunk !== '') {
+                write($custom_output_chunk);
+            }
+
+            if (!$status['running']) {
+                break;
+            }
         }
-    });
+
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+    }
+}
 
 $record = TestResults\find($record->id);
 $cases = count($record->cases);
