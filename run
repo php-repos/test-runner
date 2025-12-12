@@ -12,6 +12,21 @@ use function PhpRepos\FileManager\Files\exists;
 use function PhpRepos\FileManager\Paths\append;
 use function PhpRepos\FileManager\Paths\root;
 
+function format_duration(float $seconds): string
+{
+    if ($seconds < 0.001) {
+        return number_format($seconds * 1000000, 0) . 'μs';
+    } elseif ($seconds < 1) {
+        return number_format($seconds * 1000, 2) . 'ms';
+    } elseif ($seconds < 60) {
+        return number_format($seconds, 2) . 's';
+    } else {
+        $minutes = floor($seconds / 60);
+        $remaining_seconds = $seconds % 60;
+        return sprintf('%dm %.2fs', $minutes, $remaining_seconds);
+    }
+}
+
 $parameter = function(string $name, ?string $default = null): ?string
 {
     $input = getopt('', [$name . '::']);
@@ -37,6 +52,7 @@ $tests_directory = Path::from(append($root, $parameter('directory', 'Tests')));
 $filter = $parameter('filter', '');
 $phpkg_import_file = append($root, getenv('PHPKG_IMPORT_FILE') ?: 'phpkg.imports.php');
 $record = TestResults\insert(new TestRun($root, $filter));
+$test_suite_start_time = microtime(true);
 
 $tests = filter(ls_all($tests_directory), fn (string $file) => str_contains($file, $filter) && str_ends_with($file, 'Test.php'));
 
@@ -45,7 +61,6 @@ $descriptor_spec = [
     0 => ["pipe", "r"],  // stdin
     1 => ["pipe", "w"],  // stdout
     2 => ["pipe", "w"],  // stderr
-    3 => ["pipe", "w"],  // custom
 ];
 
 $base_command = "env ";
@@ -60,30 +75,85 @@ foreach ($tests as $test_file) {
     if (is_resource($process)) {
         stream_set_blocking($pipes[1], false);
         stream_set_blocking($pipes[2], false);
-        stream_set_blocking($pipes[3], false);
 
         while (true) {
             $status = proc_get_status($process);
 
+            // Read stdout (test code output)
             $output_chunk = fread($pipes[1], 8192);
             if ($output_chunk !== false && $output_chunk !== '') {
                 write($output_chunk);
             }
 
+            // Read stderr (actual errors)
             $error_output_chunk = fread($pipes[2], 8192);
             if ($error_output_chunk !== false && $error_output_chunk !== '') {
                 write($error_output_chunk);
             }
 
-            $custom_output_chunk = fread($pipes[3], 8192);
-            if ($custom_output_chunk !== false && $custom_output_chunk !== '') {
-                write($custom_output_chunk);
+            // Always get latest results and compare with previous loop
+            $test_run = TestResults\find($record->id);
+            $previous_cases = [];
+            foreach ($record->cases as $case) {
+                $previous_cases[$case['title']] = $case;
             }
+            
+            foreach ($test_run->cases as $case) {
+                // Check if this is a new finished case (not in previous run and has finished_at)
+                if (!isset($previous_cases[$case['title']]) && isset($case['finished_at'])) {
+                    // Case is finished, show result with duration
+                    $duration = $case['finished_at'] - $case['started_at'];
+                    $duration_str = format_duration($duration);
+                    $colored_duration = "\033[90m($duration_str)\033[0m"; // Gray color, reset after
+                    if ($case['successful']) {
+                        line("✅ {$case['title']} $colored_duration");
+                    } else {
+                        line("❌ {$case['title']} $colored_duration");
+                    }
+                }
+            }
+            
+            // Update record with latest results
+            $record = $test_run;
 
             if (!$status['running']) {
+                // Read any remaining data from both streams
+                while (($output_chunk = fread($pipes[1], 8192)) !== false && $output_chunk !== '') {
+                    write($output_chunk);
+                }
+                
+                while (($error_output_chunk = fread($pipes[2], 8192)) !== false && $error_output_chunk !== '') {
+                    write($error_output_chunk);
+                }
+                
                 break;
             }
+            
+            // Small delay to avoid busy-waiting
+            usleep(50000); // 50ms
         }
+        
+        // Final check for any remaining results after process finishes
+        $test_run = TestResults\find($record->id);
+        $previous_cases = [];
+        foreach ($record->cases as $case) {
+            $previous_cases[$case['title']] = $case;
+        }
+        foreach ($test_run->cases as $case) {
+            // Only display finished cases
+            if (!isset($previous_cases[$case['title']]) && isset($case['finished_at'])) {
+                // Case is finished, show result with duration
+                $duration = $case['finished_at'] - $case['started_at'];
+                $duration_str = format_duration($duration);
+                $colored_duration = "\033[90m($duration_str)\033[0m"; // Gray color, reset after
+                if ($case['successful']) {
+                    line("✅ {$case['title']} $colored_duration");
+                } else {
+                    line("❌ {$case['title']} $colored_duration");
+                }
+            }
+        }
+        $record = $test_run;
 
         fclose($pipes[1]);
         fclose($pipes[2]);
@@ -96,6 +166,14 @@ $cases = count($record->cases);
 $successes = count(array_filter($record->cases, fn ($case) => $case['successful']));
 $failed = count(array_filter($record->cases, fn ($case) => ! $case['successful']));
 
-line(PHP_EOL . "cases: $cases, success: $successes, failed: $failed");
+$test_suite_duration = microtime(true) - $test_suite_start_time;
+$test_suite_duration_str = format_duration($test_suite_duration);
+$colored_suite_duration = "\033[90m$test_suite_duration_str\033[0m"; // Gray color, reset after
+
+$colored_successes = "\033[32m$successes\033[0m"; // Green color, reset after
+$colored_failed = "\033[31m$failed\033[0m"; // Red color, reset after
+
+line(PHP_EOL . "cases: $cases, success: $colored_successes, failed: $colored_failed");
+line("Time: $colored_suite_duration");
 
 exit($failed);

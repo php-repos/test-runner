@@ -9,8 +9,10 @@ use ReflectionFunction;
 
 function test(string $title, Closure $case, ?Closure $before = null, ?Closure $after = null, ?Closure $finally = null): void
 {
-    $custom_pipe = fopen('php://fd/3', 'w');
     $test_run = TestResults\find(getenv('TEST_RESULT_ID'));
+
+    // Add case with start time when test starts
+    TestResults\save($test_run->add($title));
 
     try {
         $before_hook_output = $before ? call_user_func($before) : null;
@@ -33,16 +35,19 @@ function test(string $title, Closure $case, ?Closure $before = null, ?Closure $a
             }
         }
 
-        TestResults\save($test_run->add_case($title, true));
-        fwrite($custom_pipe, "✅ $title" . PHP_EOL);
+        // Update case with success status and finish time
+        TestResults\save($test_run->update_case($title, true));
     } catch (AssertionError $exception) {
-        fwrite($custom_pipe, "❌ $title: " . PHP_EOL . $exception->getMessage() . PHP_EOL);
-        TestResults\save($test_run->add_case($title, false));
+        // Update case with failure status and finish time
+        TestResults\save($test_run->update_case($title, false));
+    } catch (\Throwable $exception) {
+        // Catch any other exception/error and mark as failed
+        TestResults\save($test_run->update_case($title, false));
+        // Re-throw to let the process handle it
+        throw $exception;
     } finally {
         if ($finally) {
             call_user_func($finally);
         }
-
-        fclose($custom_pipe);
     }
 }
