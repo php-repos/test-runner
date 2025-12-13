@@ -81,28 +81,18 @@ jobs:
         shell: pwsh
         run: phpkg build production
 
-      - name: Execute tests (Unix)
-        if: runner.os != 'Windows'
+      - name: Execute tests
         id: execute-tests
+        shell: bash
         run: |
           cd builds/production
           php run
           echo "exit_code=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      - name: Execute tests (Windows)
-        if: runner.os == 'Windows'
-        id: execute-tests
-        shell: pwsh
-        run: |
-          cd builds/production
-          php run
-          $exitCode = $LASTEXITCODE
-          echo "exit_code=$exitCode" >> $env:GITHUB_OUTPUT
-        continue-on-error: true
-
-      - name: Check test result (Unix)
-        if: always() && runner.os != 'Windows'
+      - name: Check test result
+        if: always()
+        shell: bash
         run: |
           exit_code="${{ steps.execute-tests.outputs.exit_code }}"
           if [ "$exit_code" -ne 0 ]; then
@@ -111,15 +101,3 @@ jobs:
           else
             echo "Test run exited successfully with code 0."
           fi
-
-      - name: Check test result (Windows)
-        if: always() && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $exitCode = "${{ steps.execute-tests.outputs.exit_code }}"
-          if ($exitCode -ne 0) {
-            Write-Error "Test run exited with code $exitCode."
-            exit 1
-          } else {
-            Write-Host "Test run exited successfully with code 0."
-          }
