@@ -39,7 +39,41 @@ function save(Document $obj): Document
 
 function find(string $id): Document
 {
-    $data = json_decode(file_get_contents(Document::$storage . $id . '.json'), true);
+    $file = Document::$storage . $id . '.json';
+
+    $data = null;
+    $attempts = 0;
+    $maxAttempts = 3;
+
+    while ($attempts < $maxAttempts) {
+        $content = file_get_contents($file);
+
+        if ($content === false) {
+            throw new Exception('Failed to read test results file: ' . $file);
+        }
+
+        // Use json_validate() if available (PHP 8.3+), otherwise fall back to json_decode
+        $isValid = true;
+        if (function_exists('json_validate')) {
+            $isValid = json_validate($content);
+        }
+
+        if ($isValid) {
+            $data = json_decode($content, true);
+            if ($data !== null && isset($data['collection'])) {
+                break;
+            }
+        }
+
+        $attempts++;
+        if ($attempts < $maxAttempts) {
+            usleep(1000); // Sleep for 1 millisecond
+        }
+    }
+
+    if ($data === null || !isset($data['collection'])) {
+        throw new Exception('Invalid JSON in test results file after ' . $maxAttempts . ' attempts: ' . $file);
+    }
 
     $collection = $data['collection'];
     $id = $data['id'];
@@ -51,6 +85,6 @@ function find(string $id): Document
     unset($data['created_at']);
     unset($data['updated_at']);
     unset($data['version']);
-    
+
     return (new $collection(...$data))->checkout($id, $created_at, $updated_at, $version);
 }
