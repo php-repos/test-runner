@@ -21,8 +21,8 @@ function format_duration(float $seconds): string
     } elseif ($seconds < 60) {
         return number_format($seconds, 2) . 's';
     } else {
-        $minutes = floor($seconds / 60);
-        $remaining_seconds = $seconds % 60;
+        $minutes = (int) floor($seconds / 60);
+        $remaining_seconds = fmod($seconds, 60.0);
         return sprintf('%dm %.2fs', $minutes, $remaining_seconds);
     }
 }
